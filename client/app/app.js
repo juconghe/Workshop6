@@ -8,8 +8,8 @@ import ChatPopup from './components/chatpopup';
 import FeedItem from './components/feeditem';
 import {hideElement} from './util';
 import {searchForFeedItems, deleteFeedItem} from './server';
-import { IndexRoute, Router, Route, hashHistory } from 'react-router'
-
+import { IndexRoute, Router, Route, hashHistory } from 'react-router';
+import ErrorBanner from './components/errorbanner';
 /**
  * A fake profile page.
  */
@@ -47,7 +47,7 @@ class SearchResultsPage extends React.Component {
     }
     return searchTerm;
   }
-  
+
   render() {
     var searchTerm = this.getSearchTerm();
     // By using the searchTerm as the key, React will create a new
@@ -67,13 +67,13 @@ class SearchResults extends React.Component {
       results: []
     };
   }
-  
+
   deleteFeedItem(id) {
     deleteFeedItem(id, () => {
       this.refresh();
     });
   }
-  
+
   refresh() {
     var searchTerm = this.props.searchTerm;
     if (searchTerm !== "") {
@@ -90,11 +90,11 @@ class SearchResults extends React.Component {
       });
     }
   }
-  
+
   componentDidMount() {
     this.refresh();
   }
-  
+
   render() {
     return (
       <div>
@@ -139,7 +139,7 @@ class App extends React.Component {
         <div className="container">
           <div className="row">
             <div className="col-md-2 fb-left-sidebar">
-              <LeftSideBar />
+              <ErrorBanner />
             </div>
             <div className="col-md-7">
               {this.props.children}
