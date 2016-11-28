@@ -139,6 +139,7 @@ class App extends React.Component {
         <div className="container">
           <div className="row">
             <div className="col-md-2 fb-left-sidebar">
+              <LeftSideBar />
               <ErrorBanner />
             </div>
             <div className="col-md-7">

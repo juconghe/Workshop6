@@ -173,89 +173,44 @@ export function unlikeFeedItem(feedItemId, userId, cb) {
  * Adds a 'like' to a comment.
  */
 export function likeComment(feedItemId, commentIdx, userId, cb) {
-  var feedItem = readDocument('feedItems', feedItemId);
-  var comment = feedItem.comments[commentIdx];
-  comment.likeCounter.push(userId);
-  writeDocument('feedItems', feedItem);
-  comment.author = readDocument('users', comment.author);
-  emulateServerReturn(comment, cb);
+  sendXHR('PUT','/feeditem/'+feedItemId+'/likelist'+userId,undefined,(xhr) => {
+    cb(JSON.parse(xhr.responseText));
+  });
 }
 
 /**
  * Removes a 'like' from a comment.
  */
 export function unlikeComment(feedItemId, commentIdx, userId, cb) {
-  var feedItem = readDocument('feedItems', feedItemId);
-  var comment = feedItem.comments[commentIdx];
-  var userIndex = comment.likeCounter.indexOf(userId);
-  if (userIndex !== -1) {
-    comment.likeCounter.splice(userIndex, 1);
-    writeDocument('feedItems', feedItem);
-  }
-  comment.author = readDocument('users', comment.author);
-  emulateServerReturn(comment, cb);
+  sendXHR('DELETE',"/feeditem/"+feedItemId+'/likelist/'+userId,undefined,(xhr) => {
+    cb(JSON.parse(xhr.responseText));
+  });
 }
 
 /**
  * Updates the text in a feed item (assumes a status update)
  */
 export function updateFeedItemText(feedItemId, newContent, cb) {
-  var feedItem = readDocument('feedItems', feedItemId);
-  // Update text content of update.
-  feedItem.contents.contents = newContent;
-  writeDocument('feedItems', feedItem);
-  emulateServerReturn(getFeedItemSync(feedItemId), cb);
+  sendXHR('PUT','/feeditem/'+feedItemId+'/content',newContent,(xhr) => {
+    cb(JSON.parse(xhr.responseText));
+  });
 }
 
 /**
  * Deletes a feed item.
  */
 export function deleteFeedItem(feedItemId, cb) {
-  // Assumption: The current user authored this feed item.
-  deleteDocument('feedItems', feedItemId);
-  // Remove references to this feed item from all other feeds.
-  var feeds = getCollection('feeds');
-  var feedIds = Object.keys(feeds);
-  feedIds.forEach((feedId) => {
-    var feed = feeds[feedId];
-    var itemIdx = feed.contents.indexOf(feedItemId);
-    if (itemIdx !== -1) {
-      // Splice out of array.
-      feed.contents.splice(itemIdx, 1);
-      // Update feed.
-      writeDocument('feeds', feed);
-    }
+  sendXHR('DELETE','feeditem/'+feedItemId,undefined,() => {
+    cb();
   });
-
-  // Return nothing. The return just tells the client that
-  // the server has acknowledged the request, and that it has
-  // been a success.
-  emulateServerReturn(null, cb);
 }
 
 /**
  * Searches for feed items with the given text.
  */
 export function searchForFeedItems(userId, queryText, cb) {
-  // trim() removes whitespace before and after the query.
-  // toLowerCase() makes the query lowercase.
-  queryText = queryText.trim().toLowerCase();
-  var feedId = readDocument('users', userId).feed;
-  var feedItemIDs = readDocument('feeds', feedId).contents;
-  emulateServerReturn(
-    // "filter" is like "map" in that it is a magic method for
-    // arrays. It takes an anonymous function, which it calls
-    // with each item in the array. If that function returns 'true',
-    // it will include the item in a return array. Otherwise, it will
-    // not.
-    // Here, we use filter to return only feedItems that contain the
-    // query text.
-    // Since the array contains feed item IDs, we later map the filtered
-    // IDs to actual feed item objects.
-    feedItemIDs.filter((feedItemID) => {
-      var feedItem = readDocument('feedItems', feedItemID);
-      return feedItem.contents.contents.toLowerCase().indexOf(queryText) !== -1;
-    }).map(getFeedItemSync),
-    cb
-  );
+  // userID is not needed; it's included in the JSON web token.
+  sendXHR('POST', '/search', queryText, (xhr) => {
+    cb(JSON.parse(xhr.responseText));
+  });
 }
