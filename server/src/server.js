@@ -319,8 +319,8 @@ app.put('/feeditem/:feeditemid/:commentIdx/:userid',function(req,res) {
     var feedItem = readDocument('feedItems',feedItemId);
     var comment = feedItem.comments[commentIdx];
     comment.likeCounter.push(userId);
-    comment.author = readDocument('users', userId);
     writeDocument('feedItems', feedItem);
+    comment.author = readDocument('users', comment.author);
     res.status(201);
     res.send(comment);
   }else {
@@ -342,6 +342,7 @@ app.delete('/feeditem/:feeditemid/:commentIdx/:userid',function(req,res) {
       comment.likeCounter.splice(userIndex, 1);
       writeDocument('feedItems', feedItem);
     }
+    comment.author = readDocument('users', comment.author);
     res.status(201);
     res.send(comment);
   }else {
